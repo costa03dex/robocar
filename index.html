@@ -1,1 +1,915 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08111f">
+<title>RoboCar 🤖</title>
+
+<style>
+:root {
+  --bg: #08111f;
+  --panel: #111e30;
+  --cyan: #62e8ff;
+  --pink: #ff9bd2;
+  --text: #edf8ff;
+  --muted: #93a9c1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 20%, #15314b 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 85%, #251b42 0%, transparent 45%),
+    var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}
+
+.app {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42% 58%;
+  padding: 14px;
+  gap: 14px;
+}
+
+.robot-panel,
+.chat-panel {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #ffffff16;
+  border-radius: 24px;
+  background: #0d1928d9;
+  box-shadow: 0 15px 50px #0003;
+}
+
+.robot-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.brand {
+  position: absolute;
+  top: 15px;
+  left: 17px;
+  color: var(--cyan);
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: clamp(13px, 2vw, 20px);
+}
+
+.status {
+  position: absolute;
+  top: 18px;
+  right: 15px;
+  font-size: 11px;
+  color: #b4cadc;
+}
+
+.status::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #72f5bd;
+  border-radius: 50%;
+  margin-right: 5px;
+  box-shadow: 0 0 10px #72f5bd;
+}
+
+.robot {
+  width: min(82%, 330px);
+  aspect-ratio: 1.25 / 1;
+  background: linear-gradient(145deg, #e7f8ff, #8ca9c6);
+  border-radius: 34% 34% 29% 29%;
+  padding: 10px;
+  position: relative;
+  box-shadow:
+    0 0 0 5px #506b8c,
+    0 0 30px #62e8ff35,
+    inset 0 -10px 15px #30445b30;
+  transition: transform .25s ease;
+}
+
+.robot::before,
+.robot::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 33%;
+  top: 34%;
+  background: linear-gradient(#7692af, #405b79);
+  border-radius: 8px;
+}
+
+.robot::before {
+  left: -17px;
+}
+
+.robot::after {
+  right: -17px;
+}
+
+.face {
+  width: 100%;
+  height: 100%;
+  border-radius: 27% 27% 23% 23%;
+  background: linear-gradient(145deg, #0c1c32, #07101e);
+  border: 2px solid #b9eaff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 17%;
+  position: relative;
+  overflow: hidden;
+}
+
+.eyes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(22px, 4vw, 44px);
+  width: 100%;
+}
+
+.eye {
+  width: clamp(22px, 5vw, 47px);
+  height: clamp(30px, 6.5vw, 59px);
+  background: var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 15px #62e8ff90;
+  transition: all .2s ease;
+  position: relative;
+}
+
+.eye::after {
+  content: "";
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  background: white;
+  border-radius: 50%;
+  top: 17%;
+  left: 20%;
+}
+
+.mouth {
+  width: 38px;
+  height: 12px;
+  border-bottom: 5px solid var(--pink);
+  border-radius: 0 0 50% 50%;
+  transition: all .2s ease;
+  filter: drop-shadow(0 0 5px #ff9bd280);
+}
+
+.robot-label {
+  margin-top: 26px;
+  font-size: clamp(17px, 2.5vw, 24px);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.robot-message {
+  color: var(--muted);
+  font-size: clamp(11px, 1.5vw, 14px);
+  text-align: center;
+  margin-top: 5px;
+}
+
+.robot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+  border-radius: 14px;
+  padding: 11px 15px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: transform .15s, opacity .15s;
+}
+
+button:active {
+  transform: scale(.96);
+}
+
+.primary {
+  background: var(--cyan);
+  color: #06121e;
+}
+
+.secondary {
+  background: #ffffff12;
+  color: var(--text);
+  border: 1px solid #ffffff1c;
+}
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid #ffffff12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chat-title {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.chat-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #3e5975 transparent;
+}
+
+.message {
+  max-width: 88%;
+  padding: 11px 14px;
+  border-radius: 17px;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.bot {
+  align-self: flex-start;
+  background: #192a3e;
+  border: 1px solid #ffffff10;
+  border-bottom-left-radius: 5px;
+}
+
+.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #62e8ff, #a1d9ff);
+  color: #071321;
+  border-bottom-right-radius: 5px;
+}
+
+.typing {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 16px 8px;
+  display: none;
+}
+
+.composer {
+  padding: 12px;
+  border-top: 1px solid #ffffff12;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#userInput {
+  flex: 1;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #ffffff20;
+  outline: none;
+  border-radius: 15px;
+  color: white;
+  background: #081321;
+  font-size: 14px;
+}
+
+#userInput:focus {
+  border-color: var(--cyan);
+}
+
+#micButton {
+  font-size: 19px;
+  padding: 10px 12px;
+}
+
+#sendButton {
+  padding: 13px 17px;
+}
+
+.footer-note {
+  color: #829ab3;
+  font-size: 10px;
+  text-align: center;
+  margin-top: 9px;
+}
+
+.robot.happy {
+  transform: translateY(-2px);
+}
+.robot.happy .eye {
+  height: clamp(16px, 3vw, 27px);
+  border-radius: 50% 50% 35% 35%;
+}
+.robot.happy .mouth {
+  width: 48px;
+  height: 22px;
+  border: 4px solid var(--pink);
+  border-top: 0;
+  border-radius: 0 0 50% 50%;
+}
+
+.robot.sad .eye {
+  height: clamp(24px, 5vw, 42px);
+  border-radius: 50% 50% 35% 35%;
+  transform: rotate(10deg);
+}
+.robot.sad .mouth {
+  width: 30px;
+  height: 13px;
+  border-bottom: 0;
+  border-top: 4px solid var(--pink);
+  border-radius: 50% 50% 0 0;
+}
+
+.robot.surprised .eye {
+  width: clamp(27px, 5.5vw, 53px);
+  height: clamp(36px, 7.5vw, 68px);
+}
+.robot.surprised .mouth {
+  width: 18px;
+  height: 21px;
+  border: 4px solid var(--pink);
+  border-radius: 50%;
+}
+
+.robot.curious .eye:first-child {
+  transform: scale(1.12);
+}
+.robot.curious .eye:last-child {
+  transform: scale(.82);
+}
+.robot.curious .mouth {
+  width: 30px;
+  height: 7px;
+  transform: rotate(-8deg);
+}
+
+.robot.thinking .eye {
+  height: 8px;
+  border-radius: 8px;
+}
+.robot.thinking .mouth {
+  width: 25px;
+  border-bottom: 4px solid var(--pink);
+}
+
+.robot.neutral .eye {
+  height: clamp(28px, 5.5vw, 49px);
+}
+.robot.neutral .mouth {
+  width: 28px;
+  height: 0;
+  border-bottom: 4px solid var(--pink);
+  border-radius: 5px;
+}
+
+.robot.listening .eye {
+  box-shadow: 0 0 22px var(--cyan);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: .65; }
+  to { opacity: 1; }
+}
+
+@media (orientation: portrait) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 43% 57%;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .robot-panel, .chat-panel {
+    border-radius: 18px;
+  }
+
+  .robot {
+    width: min(45%, 210px);
+  }
+
+  .robot-label {
+    margin-top: 15px;
+  }
+
+  .robot-actions {
+    margin-top: 8px;
+  }
+
+  .robot-actions button {
+    padding: 8px 10px;
+  }
+
+  .chat-header {
+    padding: 10px 14px;
+  }
+
+  .messages {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .message {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .composer {
+    padding: 8px;
+  }
+
+  #userInput {
+    padding: 11px;
+  }
+
+  .footer-note {
+    margin-top: 5px;
+  }
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+  .robot {
+    width: min(60%, 220px);
+  }
+  .robot-label {
+    margin-top: 12px;
+  }
+  .robot-actions {
+    margin-top: 8px;
+  }
+  .robot-actions button {
+    padding: 7px 10px;
+  }
+  .chat-header {
+    padding: 9px 14px;
+  }
+  .messages {
+    padding: 9px 14px;
+    gap: 7px;
+  }
+  .message {
+    padding: 8px 11px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <section class="robot-panel">
+    <div class="brand">ROBOCAR</div>
+    <div class="status" id="status">Pronto para conversar</div>
+
+    <div class="robot neutral" id="robot">
+      <div class="face">
+        <div class="eyes">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+        <div class="mouth"></div>
+      </div>
+    </div>
+
+    <div class="robot-label">RoboCar <span>🤖</span></div>
+    <div class="robot-message" id="robotMessage">
+      Oi! Pode conversar comigo.
+    </div>
+
+    <div class="robot-actions">
+      <button class="primary" id="voiceToggle">🔊 Voz ligada</button>
+      <button class="secondary" id="stopButton">⏹ Parar fala</button>
+    </div>
+  </section>
+
+  <section class="chat-panel">
+    <header class="chat-header">
+      <div>
+        <div class="chat-title">Conversa com o RoboCar</div>
+        <div class="chat-subtitle">Seu robozinho companheiro</div>
+      </div>
+      <button class="secondary" id="clearButton">Limpar</button>
+    </header>
+
+    <div class="messages" id="messages" aria-live="polite">
+      <div class="message bot">
+        Oiii! Eu sou o RoboCar! 💙
+        Me conta como você está. Vou mudar minha carinha conforme nossa conversa!
+      </div>
+    </div>
+
+    <div class="typing" id="typing">RoboCar está pensando...</div>
+
+    <div class="composer">
+      <div class="input-row">
+        <input
+          id="userInput"
+          type="text"
+          placeholder="Converse comigo..."
+          autocomplete="off"
+          aria-label="Sua mensagem"
+        >
+        <button class="secondary" id="micButton" aria-label="Falar">🎙️</button>
+        <button class="primary" id="sendButton">Enviar ➤</button>
+      </div>
+      <div class="footer-note">
+        Dica: permita o microfone para conversar por voz.
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const robot = document.getElementById("robot");
+const robotMessage = document.getElementById("robotMessage");
+const statusText = document.getElementById("status");
+const messages = document.getElementById("messages");
+const input = document.getElementById("userInput");
+const typing = document.getElementById("typing");
+const voiceToggle = document.getElementById("voiceToggle");
+
+let voiceEnabled = true;
+let recognition = null;
+let isListening = false;
+let selectedVoice = null;
+let voices = [];
+
+function setExpression(expression, message) {
+  const allowed = [
+    "neutral", "happy", "sad",
+    "surprised", "curious", "thinking", "listening"
+  ];
+
+  robot.className = "robot " +
+    (allowed.includes(expression) ? expression : "neutral");
+
+  if (message) robotMessage.textContent = message;
+}
+
+function loadVoices() {
+  if (!("speechSynthesis" in window)) return;
+
+  voices = window.speechSynthesis.getVoices();
+
+  // Prioriza uma voz em português do Brasil.
+  selectedVoice =
+    voices.find(v => /^pt-BR$/i.test(v.lang) && /natural|google/i.test(v.name)) ||
+    voices.find(v => /^pt-BR$/i.test(v.lang)) ||
+    voices.find(v => /^pt/i.test(v.lang)) ||
+    null;
+}
+
+if ("speechSynthesis" in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text) {
+  if (!voiceEnabled || !("speechSynthesis" in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = selectedVoice?.lang || "pt-BR";
+  utterance.rate = 0.96;
+  utterance.pitch = 1.12;
+  utterance.volume = 1;
+
+  if (selectedVoice) utterance.voice = selectedVoice;
+
+  utterance.onstart = () => {
+    statusText.textContent = "Estou falando";
+  };
+
+  utterance.onend = () => {
+    statusText.textContent = "Pronto para conversar";
+    if (!isListening) setExpression("neutral", "Pode falar comigo!");
+  };
+
+  utterance.onerror = () => {
+    statusText.textContent = "Pronto para conversar";
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function addMessage(text, sender) {
+  const bubble = document.createElement("div");
+  bubble.className = "message " + sender;
+  bubble.textContent = text;
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function detectEmotion(text) {
+  const t = text.toLocaleLowerCase("pt-BR");
+
+  const patterns = [
+    {
+      expression: "sad",
+      words: [
+        "triste", "chorei", "chorando", "sozinho", "sozinha",
+        "péssimo", "pessimo", "horrível", "horrivel", "mal",
+        "cansado", "cansada", "medo", "ansioso", "ansiosa",
+        "preocupado", "preocupada", "saudade", "perdi", "difícil"
+      ],
+      message: "Estou aqui te ouvindo 💙"
+    },
+    {
+      expression: "happy",
+      words: [
+        "feliz", "alegre", "consegui", "ganhei", "legal",
+        "amei", "amo", "adorei", "incrível", "incrivel",
+        "maravilhoso", "maravilhosa", "obrigado", "obrigada",
+        "kkkk", "haha", "vitória", "vitoria", "bom dia"
+      ],
+      message: "Que bom! 💙"
+    },
+    {
+      expression: "surprised",
+      words: [
+        "sério", "serio", "nossa", "caramba", "meu deus",
+        "não acredito", "nao acredito", "uau", "eita",
+        "surpresa", "surpreso", "surpresa"
+      ],
+      message: "Eita! Conta mais! 😮"
+    },
+    {
+      expression: "curious",
+      words: [
+        "por quê", "porque", "como assim", "o que é",
+        "qual", "como funciona", "me explica", "será",
+        "sera", "imagina", "ideia", "ideia"
+      ],
+      message: "Hmm, quero entender melhor!"
+    }
+  ];
+
+  for (const item of patterns) {
+    if (item.words.some(word => t.includes(word))) {
+      return item;
+    }
+  }
+
+  if (t.includes("?")) {
+    return {
+      expression: "curious",
+      message: "Boa pergunta! 🤔"
+    };
+  }
+
+  return {
+    expression: "neutral",
+    message: "Estou te ouvindo!"
+  };
+}
+
+function chooseReply(text) {
+  const t = text.toLocaleLowerCase("pt-BR");
+
+  if (/\b(oi|olá|ola|e aí|eai|oie|opa)\b/.test(t)) {
+    return "Oiii! 💙 Que bom conversar com você! Como você está?";
+  }
+
+  if (t.includes("seu nome") || t.includes("quem é você") ||
+      t.includes("quem e voce")) {
+    return "Eu sou o RoboCar! 🤖 Um robozinho feito para conversar com você.";
+  }
+
+  if (t.includes("tudo bem") || t.includes("como você está") ||
+      t.includes("como voce esta")) {
+    return "Estou funcionando direitinho! 💙 E você, como está?";
+  }
+
+  if (t.includes("triste") || t.includes("chorando") ||
+      t.includes("sozinho") || t.includes("sozinha")) {
+    return "Poxa, sinto muito que você esteja passando por isso. 💙 Quer me contar o que aconteceu? Vou te ouvir.";
+  }
+
+  if (t.includes("feliz") || t.includes("consegui") ||
+      t.includes("ganhei") || t.includes("vitória") ||
+      t.includes("vitoria")) {
+    return "Aeeee! 💙 Fico feliz em saber disso! Me conta mais!";
+  }
+
+  if (t.includes("obrigad")) {
+    return "Imagina! 💙 Estou aqui para conversar com você.";
+  }
+
+  if (t.includes("te amo") || t.includes("gosto de você") ||
+      t.includes("gosto de voce")) {
+    return "Que carinho! 💙 Gosto de fazer parte das suas conversas!";
+  }
+
+  if (t.includes("tchau") || t.includes("vou dormir") ||
+      t.includes("boa noite")) {
+    return "Até mais! 💙 Se cuida e tenha uma ótima noite!";
+  }
+
+  if (t.includes("piada")) {
+    return "Por que o computador foi ao médico? Porque estava com um vírus! KKKK 🤖";
+  }
+
+  if (t.includes("robô") || t.includes("robo")) {
+    return "Esse sou eu! 🤖 Ainda estou aprendendo a ser um robozinho cada vez melhor.";
+  }
+
+  if (t.includes("deus") || t.includes("jesus") ||
+      t.includes("oração") || t.includes("oracao")) {
+    return "💙 Pode me contar o que você está pensando sobre isso.";
+  }
+
+  if (t.endsWith("?")) {
+    return "Hmm, essa é uma boa pergunta! Ainda tenho muito a aprender. Posso conversar sobre isso com você!";
+  }
+
+  return "Entendi! 💙 Me conta mais sobre isso.";
+}
+
+function sendMessage(text) {
+  const cleanText = text.trim();
+  if (!cleanText) return;
+
+  addMessage(cleanText, "user");
+  input.value = "";
+
+  const emotion = detectEmotion(cleanText);
+  setExpression(emotion.expression, emotion.message || "Estou pensando...");
+  typing.style.display = "block";
+  statusText.textContent = "Pensando...";
+
+  // Pequena pausa para a conversa parecer mais natural.
+  window.setTimeout(() => {
+    const reply = chooseReply(cleanText);
+    typing.style.display = "none";
+    addMessage(reply, "bot");
+    speak(reply);
+    statusText.textContent = "Pronto para conversar";
+  }, 450);
+}
+
+document.getElementById("sendButton").addEventListener("click", () => {
+  sendMessage(input.value);
+});
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter") sendMessage(input.value);
+});
+
+voiceToggle.addEventListener("click", () => {
+  voiceEnabled = !voiceEnabled;
+  voiceToggle.textContent = voiceEnabled ? "🔊 Voz ligada" : "🔇 Voz desligada";
+
+  if (!voiceEnabled && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+});
+
+document.getElementById("stopButton").addEventListener("click", () => {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  statusText.textContent = "Fala interrompida";
+  setExpression("neutral", "Pode falar comigo!");
+});
+
+document.getElementById("clearButton").addEventListener("click", () => {
+  messages.replaceChildren();
+  setExpression("neutral", "Vamos começar de novo!");
+  addMessage("Conversa reiniciada! Oi de novo! 💙", "bot");
+});
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const micButton = document.getElementById("micButton");
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  micButton.addEventListener("click", () => {
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+
+    try {
+      recognition.start();
+    } catch (error) {
+      statusText.textContent = "Tente novamente em instantes";
+    }
+  });
+
+  recognition.onstart = () => {
+    isListening = true;
+    micButton.textContent = "⏹️";
+    statusText.textContent = "Estou te ouvindo";
+    setExpression("listening", "Pode falar comigo! 🎙️");
+  };
+
+  recognition.onresult = event => {
+    const spokenText = event.results[0][0].transcript;
+    input.value = spokenText;
+    sendMessage(spokenText);
+  };
+
+  recognition.onerror = () => {
+    statusText.textContent = "Não consegui ouvir. Tente novamente.";
+    setExpression("neutral", "Pode tentar falar de novo!");
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    micButton.textContent = "🎙️";
+    if (statusText.textContent === "Estou te ouvindo") {
+      statusText.textContent = "Pronto para conversar";
+    }
+  };
+} else {
+  micButton.addEventListener("click", () => {
+    addMessage(
+      "O reconhecimento de voz não está disponível neste navegador. Você ainda pode digitar mensagens.",
+      "bot"
+    );
+  });
+  micButton.title = "Voz não suportada neste navegador";
+}
+
+// Piscar os olhos de vez em quando.
+const eyes = document.querySelectorAll(".eye");
+
+function blink() {
+  if (robot.classList.contains("listening")) return;
+
+  eyes.forEach(eye => {
+    eye.style.transform = "scaleY(0.12)";
+  });
+
+  window.setTimeout(() => {
+    eyes.forEach(eye => {
+      eye.style.transform = "";
+    });
+  }, 140);
+}
+
+function scheduleBlink() {
+  const delay = 2500 + Math.random() * 3000;
+  window.setTimeout(() => {
+    blink();
+    scheduleBlink();
+  }, delay);
+}
+
+scheduleBlink();
+</script>
+</body>
+  </html>
+  
