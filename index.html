@@ -1,1 +1,1279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robocar Assistente AI - O Carro Robô Fofo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        cyber: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        cyberDark: '#0b0f19',
+                        cyberCard: '#131b2e',
+                        oledBg: '#050811',
+                        neonBlue: '#00f0ff',
+                        neonPink: '#ff007f',
+                        neonGreen: '#00ff66',
+                        neonGold: '#ffcc00',
+                        neonPurple: '#a855f7'
+                    },
+                    boxShadow: {
+                        'oled-glow': '0 0 25px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.2)',
+                        'pink-glow': '0 0 25px rgba(255, 0, 127, 0.4)',
+                        'gold-glow': '0 0 25px rgba(255, 204, 0, 0.5)',
+                        'cyber-card': '0 10px 30px -10px rgba(0, 0, 0, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom OLED Grid Pattern & Animations */
+        .oled-screen {
+            background-color: #040711;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 12px 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Glass visor curved reflection */
+        .oled-screen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.0) 100%);
+            border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+            pointer-events: none;
+        }
+
+        /* Floating body hover animation */
+        @keyframes floatBody {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(0.5deg); }
+        }
+
+        @keyframes pulseAura {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.03); }
+        }
+
+        @keyframes turboBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-14px) scale(1.05) rotate(-2deg); }
+            75% { transform: translateY(-6px) scale(0.98) rotate(2deg); }
+        }
+
+        .robocar-float {
+            animation: floatBody 4s ease-in-out infinite;
+        }
+
+        .robocar-turbo {
+            animation: turboBounce 0.5s ease-in-out infinite;
+        }
+
+        .bottom-aura {
+            animation: pulseAura 3s ease-in-out infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+
+        /* Waveform bar animations */
+        .wave-bar {
+            transition: height 0.1s ease;
+        }
+    </style>
+</head>
+<body class="bg-cyberDark text-slate-100 font-sans min-h-screen flex flex-col selection:bg-neonBlue selection:text-cyberDark">
+
+    <!-- TOP HEADER / NAV -->
+    <header class="border-b border-slate-800/80 bg-cyberDark/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white font-cyber font-bold text-xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid font-bold fa-car-side"></i>
+                </div>
+                <div>
+                    <h1 class="font-cyber font-bold text-lg md:text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-neonBlue via-cyan-200 to-neonPink">
+                        ROBOCAR <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950/80 text-neonBlue border border-cyan-800/50">v2.5 OLED</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Seu assistente IA com Rostinho OLED Interativo</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Engine Sound Toggle -->
+                <button id="engine-sound-btn" title="Ligar/Desligar som do motor" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center space-x-2 border border-slate-700 transition duration-200">
+                    <i class="fa-solid fa-volume-high text-neonGreen" id="engine-sound-icon"></i>
+                    <span class="hidden md:inline">Som Motor</span>
+                </button>
+
+                <!-- Gemini API Settings -->
+                <button id="open-settings-btn" title="Configurações & Chave API Gemini" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center space-x-2 border border-slate-700 transition duration-200">
+                    <i class="fa-solid fa-gear text-neonBlue"></i>
+                    <span class="hidden md:inline">Configurações</span>
+                </button>
+
+                <!-- GitHub Pages Deployment Guide Button -->
+                <button id="open-deploy-btn" title="Como hospedar no GitHub Pages" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-xs font-bold text-white shadow-md transition duration-200 flex items-center space-x-1.5">
+                    <i class="fa-brands fa-github"></i>
+                    <span>Publicar Grátis</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT / TOP PANEL: ROBOCAR CHARACTER & ROSTINHO DISPLAY -->
+        <section class="lg:col-span-5 flex flex-col items-center">
+            
+            <!-- ROBOCAR CHASSIS & OLED FACE CONTAINER -->
+            <div id="robocar-chassis" class="w-full max-w-md bg-cyberCard/70 border border-slate-800/80 rounded-3xl p-6 shadow-cyber-card backdrop-blur-xl relative flex flex-col items-center">
+                
+                <!-- Status Bar Top -->
+                <div class="w-full flex items-center justify-between text-xs text-slate-400 mb-4 px-2 font-cyber">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-neonGreen animate-pulse"></span>
+                        <span id="status-text" class="text-neonGreen tracking-wider">MOTOR PRONTO</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span title="Bateria 100%"><i class="fa-solid fa-battery-full text-neonGreen"></i> 100%</span>
+                        <span title="Conexão"><i class="fa-solid fa-wifi text-neonBlue"></i> IA</span>
+                    </div>
+                </div>
+
+                <!-- ROBOCAR VISUAL AVATAR CONTAINER -->
+                <div id="robocar-body-wrapper" class="robocar-float my-2 relative cursor-pointer group" title="Clique no Robocar para dar carinho!">
+                    
+                    <!-- Ambient Aura Light underneath -->
+                    <div id="aura-ring" class="bottom-aura absolute -bottom-6 left-1/2 -translate-x-1/2 w-64 h-12 bg-neonBlue/20 rounded-full blur-xl pointer-events-none"></div>
+
+                    <!-- ROBOCAR SVG BODY WITH OLED FACE SCREEN -->
+                    <svg id="robocar-svg" class="w-72 h-72 md:w-80 md:h-80 drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        
+                        <!-- Top Antenna Spoiler with glowing tip -->
+                        <path d="M 200,60 L 200,25" stroke="#334155" stroke-width="6" stroke-linecap="round"/>
+                        <circle id="antenna-light" cx="200" cy="22" r="8" fill="#00f0ff" class="animate-pulse" filter="drop-shadow(0 0 8px #00f0ff)"/>
+
+                        <!-- Side Cyber Wheels / Ears -->
+                        <!-- Left Wheel -->
+                        <g id="left-wheel">
+                            <rect x="35" y="150" width="30" height="90" rx="12" fill="#1e293b" stroke="#334155" stroke-width="4"/>
+                            <rect x="42" y="165" width="16" height="60" rx="6" fill="#0f172a"/>
+                            <circle cx="50" cy="195" r="5" fill="#00f0ff" />
+                        </g>
+                        <!-- Right Wheel -->
+                        <g id="right-wheel">
+                            <rect x="335" y="150" width="30" height="90" rx="12" fill="#1e293b" stroke="#334155" stroke-width="4"/>
+                            <rect x="342" y="165" width="16" height="60" rx="6" fill="#0f172a"/>
+                            <circle cx="350" cy="195" r="5" fill="#00f0ff" />
+                        </g>
+
+                        <!-- Robocar Outer Head / Car Body Frame -->
+                        <path d="M 80,130 C 80,75 130,55 200,55 C 270,55 320,75 320,130 L 330,220 C 330,270 280,290 200,290 C 120,290 70,270 70,220 Z" 
+                              fill="url(#bodyGradient)" stroke="#334155" stroke-width="6"/>
+
+                        <!-- Hood Metallic Creases -->
+                        <path d="M 120,80 L 150,110 M 280,80 L 250,110" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- Lower Car Bumper & Headlights -->
+                        <!-- Bumper -->
+                        <path d="M 90,240 C 140,265 260,265 310,240 C 320,270 270,285 200,285 C 130,285 80,270 90,240 Z" fill="#0f172a" stroke="#1e293b" stroke-width="3"/>
+                        <!-- Left Headlight LED -->
+                        <ellipse cx="110" cy="245" rx="18" ry="8" fill="#00f0ff" opacity="0.9" filter="drop-shadow(0 0 6px #00f0ff)"/>
+                        <!-- Right Headlight LED -->
+                        <ellipse cx="290" cy="245" rx="18" ry="8" fill="#00f0ff" opacity="0.9" filter="drop-shadow(0 0 6px #00f0ff)"/>
+                        
+                        <!-- Glowing Cyber Grille Line -->
+                        <path d="M 150,260 L 250,260" stroke="#00f0ff" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+                        <!-- ========================================== -->
+                        <!-- PROMINENT OLED GLASS FACE VISOR ("ROSTINHO") -->
+                        <!-- ========================================== -->
+                        <g id="oled-visor-group">
+                            <!-- Outer Glossy Visor Screen Bezel -->
+                            <rect x="95" y="105" width="210" height="125" rx="35" fill="#040711" stroke="#00f0ff" stroke-width="3.5" filter="drop-shadow(0 0 15px rgba(0, 240, 255, 0.4))"/>
+                            
+                            <!-- Inner OLED Display Frame -->
+                            <rect x="100" y="110" width="200" height="115" rx="30" fill="#050814"/>
+
+                            <!-- Dynamic OLED Content Container -->
+                            <g id="oled-face-features">
+                                
+                                <!-- ROSY BLUSH CHEEKS -->
+                                <circle id="left-cheek" cx="125" cy="180" r="11" fill="#ff007f" opacity="0.35" filter="drop-shadow(0 0 8px #ff007f)"/>
+                                <circle id="right-cheek" cx="275" cy="180" r="11" fill="#ff007f" opacity="0.35" filter="drop-shadow(0 0 8px #ff007f)"/>
+
+                                <!-- LEFT EYE GROUP -->
+                                <g id="left-eye-group" transform="translate(145, 148)">
+                                    <!-- Dynamic SVG shape injected by JS -->
+                                </g>
+
+                                <!-- RIGHT EYE GROUP -->
+                                <g id="right-eye-group" transform="translate(255, 148)">
+                                    <!-- Dynamic SVG shape injected by JS -->
+                                </g>
+
+                                <!-- MOUTH GROUP -->
+                                <g id="mouth-group">
+                                    <!-- Dynamic SVG shape/path injected by JS -->
+                                </g>
+
+                                <!-- Top OLED status bar icons -->
+                                <path d="M 115,122 L 125,122 M 115,126 L 122,126" stroke="#00f0ff" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+                                <!-- Small cute flame icon for turbo mode on OLED screen top right -->
+                                <path id="oled-turbo-icon" d="M 280,126 C 280,120 284,118 285,122 C 286,119 289,121 288,126 Z" fill="#ffcc00" opacity="0"/>
+                            </g>
+                        </g>
+
+                        <!-- Gradients definition -->
+                        <defs>
+                            <linearGradient id="bodyGradient" x1="200" y1="55" x2="200" y2="290" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#1e293b"/>
+                                <stop offset="50%" stop-color="#0f172a"/>
+                                <stop offset="100%" stop-color="#090d16"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <!-- Petting reaction text bubble overlay -->
+                <div id="pet-speech" class="absolute top-16 bg-slate-900/90 text-neonBlue text-xs font-bold px-3 py-1.5 rounded-full border border-cyan-500/50 shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none">
+                    Vrum vrum! Gostei do carinho! 🚘💙
+                </div>
+
+                <!-- EXPRESSION SELECTOR TEST BAR -->
+                <div class="w-full mt-2">
+                    <p class="text-xs text-slate-400 font-semibold mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-face-smile text-neonBlue mr-1"></i> Mudar Expressão do Rostinho:</span>
+                        <span class="text-[10px] text-slate-500">Clique para testar</span>
+                    </p>
+                    
+                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+                        <button data-expr="neutral" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Neutro">
+                            <span class="text-base">😃</span>
+                            <span class="text-[10px]">Normal</span>
+                        </button>
+
+                        <button data-expr="listening" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Ouvindo">
+                            <span class="text-base">🎧</span>
+                            <span class="text-[10px]">Ouvindo</span>
+                        </button>
+
+                        <button data-expr="thinking" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Pensando">
+                            <span class="text-base">🤔</span>
+                            <span class="text-[10px]">Pensando</span>
+                        </button>
+
+                        <button data-expr="speaking" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Falando">
+                            <span class="text-base">🗣️</span>
+                            <span class="text-[10px]">Falando</span>
+                        </button>
+
+                        <button data-expr="turbo" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Turbo / Feliz">
+                            <span class="text-base">⚡</span>
+                            <span class="text-[10px]">Turbo</span>
+                        </button>
+
+                        <button data-expr="surprised" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Surpreso">
+                            <span class="text-base">😲</span>
+                            <span class="text-[10px]">Uau!</span>
+                        </button>
+
+                        <button data-expr="happy" class="expr-btn p-2 rounded-xl bg-slate-800/90 hover:bg-cyan-950 border border-slate-700/80 text-xs flex flex-col items-center space-y-1 transition text-slate-300 active:scale-95" title="Amor / Super Feliz">
+                            <span class="text-base">😍</span>
+                            <span class="text-[10px]">Amor</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Engine Rev Play Action Button -->
+                <button id="rev-engine-btn" class="w-full mt-4 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-cyber font-bold text-xs tracking-wider shadow-lg shadow-cyan-500/25 transition transform active:scale-98 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>ACELERAR MOTOR (VRUM VRUM!)</span>
+                </button>
+            </div>
+
+        </section>
+
+        <!-- RIGHT / MAIN PANEL: CHAT INTERACTION & VOICE CONTROLS -->
+        <section class="lg:col-span-7 flex flex-col h-[580px] md:h-[650px] bg-cyberCard/70 border border-slate-800/80 rounded-3xl p-4 md:p-6 shadow-cyber-card backdrop-blur-xl relative">
+            
+            <!-- Chat Title & Status -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 rounded-full bg-neonBlue animate-ping"></div>
+                    <h2 class="font-cyber font-bold text-sm md:text-base text-slate-200">Terminal de Comunicação</h2>
+                </div>
+                <div class="text-xs text-slate-400">
+                    <span id="voice-status-badge" class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-medium">Voz Ativa</span>
+                </div>
+            </div>
+
+            <!-- QUICK CHAT ACTION CHIPS -->
+            <div class="py-3 flex items-center space-x-2 overflow-x-auto no-scrollbar text-xs">
+                <span class="text-slate-500 font-semibold whitespace-nowrap"><i class="fa-solid fa-bolt text-neonGold mr-1"></i>Atalhos:</span>
+                <button class="quick-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">Quem é você?</button>
+                <button class="quick-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">Liga o motor! 🚗</button>
+                <button class="quick-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">Me conte uma piada</button>
+                <button class="quick-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">Vamos viajar!</button>
+                <button class="quick-chip whitespace-nowrap px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">Modo Turbo ⚡</button>
+            </div>
+
+            <!-- CHAT MESSAGES LOG CONTAINER -->
+            <div id="chat-box" class="flex-1 overflow-y-auto my-2 pr-2 space-y-4">
+                
+                <!-- Initial Welcome Message from Robocar -->
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 rounded-full bg-cyan-900/80 border border-cyan-500/50 flex items-center justify-center text-neonBlue text-xs font-bold flex-shrink-0 mt-1">
+                        🤖
+                    </div>
+                    <div class="bg-slate-800/90 text-slate-200 border border-slate-700/80 rounded-2xl rounded-tl-none p-3.5 max-w-[85%] text-sm leading-relaxed shadow-md">
+                        <p class="font-bold text-neonBlue mb-1 font-cyber text-xs">Robocar IA:</p>
+                        <p>Olá, amiguinho! Vrum vrum! 🚗💨 Eu sou o **Robocar**, seu robozinho-carro assistente fofo! Clique no microfone para falar comigo ou mande uma mensagem. Como posso te ajudar hoje?</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- VOICE WAVEFORM INDICATOR DISPLAY (Visible when listening/speaking) -->
+            <div id="waveform-container" class="h-8 bg-slate-900/80 rounded-xl border border-slate-800 mb-3 px-4 flex items-center justify-center space-x-1 hidden">
+                <span class="text-xs text-slate-400 mr-2 font-cyber" id="wave-label">Ouvindo...</span>
+                <div class="wave-bar w-1 bg-neonBlue h-2 rounded-full"></div>
+                <div class="wave-bar w-1 bg-neonBlue h-4 rounded-full"></div>
+                <div class="wave-bar w-1 bg-neonPink h-6 rounded-full"></div>
+                <div class="wave-bar w-1 bg-neonBlue h-3 rounded-full"></div>
+                <div class="wave-bar w-1 bg-neonBlue h-5 rounded-full"></div>
+                <div class="wave-bar w-1 bg-neonPink h-2 rounded-full"></div>
+            </div>
+
+            <!-- INPUT BAR FORM -->
+            <form id="chat-form" class="mt-auto flex items-center space-x-2">
+                <!-- Voice Mic Button -->
+                <button type="button" id="mic-btn" class="w-12 h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-neonBlue hover:text-white flex items-center justify-center text-lg transition duration-200 relative group flex-shrink-0" title="Falar por voz">
+                    <i class="fa-solid fa-microphone" id="mic-icon"></i>
+                    <span id="mic-pulse" class="absolute inset-0 rounded-2xl bg-neonPink/30 animate-ping hidden"></span>
+                </button>
+
+                <!-- Text Input -->
+                <input type="text" id="user-input" placeholder="Digite uma mensagem ou comando..." 
+                       class="flex-1 bg-slate-900/90 border border-slate-700/80 rounded-2xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-neonBlue transition" />
+
+                <!-- Send Button -->
+                <button type="submit" class="w-12 h-12 rounded-2xl bg-gradient-to-r from-neonBlue to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-cyberDark font-bold flex items-center justify-center text-lg transition duration-200 flex-shrink-0 shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+
+        </section>
+    </main>
+
+    <!-- CONFIGURATION / SETTINGS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-cyberCard border border-slate-700/80 w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button id="close-settings-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="font-cyber font-bold text-lg text-neonBlue mb-1 flex items-center">
+                <i class="fa-solid fa-sliders mr-2"></i> Configurações do Robocar
+            </h3>
+            <p class="text-xs text-slate-400 mb-6">Personalize a IA Gemini, voz e efeitos do robô.</p>
+
+            <div class="space-y-4 text-xs">
+                <!-- Gemini API Key Input -->
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">Chave API do Google Gemini (Opcional):</label>
+                    <input type="password" id="gemini-api-key" placeholder="Cole sua AI Studio API Key aqui..." 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-neonBlue"/>
+                    <p class="text-[10px] text-slate-500 mt-1">
+                        Sem a chave, o Robocar funcionará com respostas locais inteligentes predefinidas!
+                    </p>
+                </div>
+
+                <!-- Voice Selection -->
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">Voz do Robocar:</label>
+                    <select id="voice-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-neonBlue">
+                        <option value="">Carregando vozes do sistema...</option>
+                    </select>
+                </div>
+
+                <!-- Pitch & Rate Sliders -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Tom da Voz (Pitch):</label>
+                        <input type="range" id="voice-pitch" min="0.5" max="1.8" step="0.1" value="1.3" class="w-full accent-neonBlue">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-300 mb-1">Velocidade (Speed):</label>
+                        <input type="range" id="voice-rate" min="0.7" max="1.5" step="0.1" value="1.0" class="w-full accent-neonBlue">
+                    </div>
+                </div>
+
+                <!-- Persona Prompt Info -->
+                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                    <p class="font-bold text-slate-300 mb-1"><i class="fa-solid fa-robot text-neonPink mr-1"></i> Sistema de Personalidade:</p>
+                    <p class="text-slate-400 text-[11px] leading-relaxed">
+                        "Você é o Robocar, um robozinho-carro assistente super fofo, empolgado e inteligente! Responda sempre de forma amigável e divertida em Português com emojis carinhosos e barulhinhos de carro (Vrum vrum!, Bibi!, Bip bip!)."
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="save-settings-btn" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-neonBlue to-blue-600 font-bold text-xs text-cyberDark hover:from-cyan-300 hover:to-blue-500 transition shadow-md">
+                    Salvar e Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GITHUB PAGES DEPLOYMENT INSTRUCTIONS MODAL -->
+    <div id="deploy-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-cyberCard border border-slate-700/80 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button id="close-deploy-btn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="font-cyber font-bold text-lg text-neonPink mb-1 flex items-center">
+                <i class="fa-brands fa-github text-xl mr-2"></i> Publicar no GitHub Pages (Grátis)
+            </h3>
+            <p class="text-xs text-slate-400 mb-4">Siga estes 4 passos simples para rodar o Robocar no seu celular ou computador de graça!</p>
+
+            <div class="space-y-4 text-xs text-slate-300">
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-start space-x-3">
+                    <span class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">1</span>
+                    <div>
+                        <p class="font-bold text-slate-200">Crie um Repositório no GitHub:</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Acesse <a href="https://github.com/new" target="_blank" class="text-neonBlue underline">github.com/new</a>, dê o nome de <code class="bg-slate-800 px-1 rounded text-cyan-300">robocar-app</code> e selecione como **Público**.</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-start space-x-3">
+                    <span class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">2</span>
+                    <div>
+                        <p class="font-bold text-slate-200">Adicione o arquivo index.html:</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Clique em "Creating a new file", nomeie como <code class="bg-slate-800 px-1 rounded text-cyan-300">index.html</code> e cole todo o código desta página.</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-start space-x-3">
+                    <span class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">3</span>
+                    <div>
+                        <p class="font-bold text-slate-200">Ative o GitHub Pages:</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Vá em **Settings > Pages** no seu repositório. Em **Source**, escolha a branch <code class="bg-slate-800 px-1 rounded text-cyan-300">main</code> (ou master) e clique em **Save**.</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-start space-x-3">
+                    <span class="w-6 h-6 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">4</span>
+                    <div>
+                        <p class="font-bold text-slate-200">Pronto! Acesse de qualquer lugar:</p>
+                        <p class="text-slate-400 text-[11px] mt-0.5">Em alguns instantes seu Robocar estará online na URL: <br><code class="bg-slate-800 px-1 text-neonGreen rounded font-mono text-[10px]">https://seu-usuario.github.io/robocar-app/</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="ok-deploy-btn" class="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-xs text-white transition">
+                    Entendi!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO & JAVASCRIPT LOGIC -->
+    <script>
+        /**
+         * WEB AUDIO API SOUND ENGINE (Engine Revs, Beeps, Chirps)
+         */
+        class RobocarSoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            // Synthesizes realistic futuristic electric car engine rev sound
+            playEngineRev() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                
+                // Frequency ramp up and down
+                const now = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(70, now);
+                osc.frequency.exponentialRampToValueAtTime(380, now + 0.35);
+                osc.frequency.exponentialRampToValueAtTime(90, now + 1.1);
+
+                // Lowpass filter frequency sweep
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(250, now);
+                filter.frequency.linearRampToValueAtTime(1400, now + 0.35);
+                filter.frequency.linearRampToValueAtTime(300, now + 1.1);
+
+                // Volume envelope
+                gain.gain.setValueAtTime(0.01, now);
+                gain.gain.linearRampToValueAtTime(0.25, now + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 1.1);
+            }
+
+            // Cyber beep/chirp for interactions
+            playChirp(freq = 880, duration = 0.12) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                const now = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + duration);
+
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + duration);
+            }
+        }
+
+        /**
+         * EXPRESSIVE OLED FACE RENDERER ("ROSTINHO")
+         */
+        class RobocarFace {
+            constructor() {
+                this.leftEyeGroup = document.getElementById('left-eye-group');
+                this.rightEyeGroup = document.getElementById('right-eye-group');
+                this.mouthGroup = document.getElementById('mouth-group');
+                this.leftCheek = document.getElementById('left-cheek');
+                this.rightCheek = document.getElementById('right-cheek');
+                this.turboIcon = document.getElementById('oled-turbo-icon');
+                this.chassis = document.getElementById('robocar-body-wrapper');
+                
+                this.currentExpression = 'neutral';
+                this.blinkInterval = null;
+                this.speakingInterval = null;
+
+                this.initBlinkTimer();
+                this.setExpression('neutral');
+            }
+
+            initBlinkTimer() {
+                // Auto blink every 3.5 seconds if neutral or happy
+                this.blinkInterval = setInterval(() => {
+                    if (this.currentExpression === 'neutral' || this.currentExpression === 'happy') {
+                        this.triggerBlink();
+                    }
+                }, 3800);
+            }
+
+            triggerBlink() {
+                const prevExpr = this.currentExpression;
+                this.renderBlinkEye();
+                setTimeout(() => {
+                    if (this.currentExpression === prevExpr) {
+                        this.setExpression(prevExpr);
+                    }
+                }, 180);
+            }
+
+            renderBlinkEye() {
+                // Closed line eyes
+                const blinkSVG = `<path d="M -16,0 L 16,0" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #00f0ff)"/>`;
+                this.leftEyeGroup.innerHTML = blinkSVG;
+                this.rightEyeGroup.innerHTML = blinkSVG;
+            }
+
+            setExpression(expr) {
+                this.currentExpression = expr;
+                if (this.speakingInterval && expr !== 'speaking') {
+                    clearInterval(this.speakingInterval);
+                    this.speakingInterval = null;
+                }
+
+                this.chassis.classList.remove('robocar-turbo');
+                this.turboIcon.setAttribute('opacity', '0');
+
+                switch (expr) {
+                    case 'neutral':
+                        this.renderNeutral();
+                        break;
+                    case 'listening':
+                        this.renderListening();
+                        break;
+                    case 'thinking':
+                        this.renderThinking();
+                        break;
+                    case 'speaking':
+                        this.renderSpeaking();
+                        break;
+                    case 'turbo':
+                        this.renderTurbo();
+                        break;
+                    case 'surprised':
+                        this.renderSurprised();
+                        break;
+                    case 'happy':
+                        this.renderHappy();
+                        break;
+                    default:
+                        this.renderNeutral();
+                }
+            }
+
+            renderNeutral() {
+                // Cute round glowing eyes with shiny highlights
+                const eyeSVG = `
+                    <circle cx="0" cy="0" r="16" fill="#00f0ff" filter="drop-shadow(0 0 8px #00f0ff)"/>
+                    <circle cx="-5" cy="-5" r="5" fill="#ffffff"/>
+                    <circle cx="5" cy="5" r="2.5" fill="#ffffff" opacity="0.8"/>
+                `;
+                this.leftEyeGroup.innerHTML = eyeSVG;
+                this.rightEyeGroup.innerHTML = eyeSVG;
+
+                // Gentle upward smile
+                this.mouthGroup.innerHTML = `
+                    <path d="M 180,182 Q 200,195 220,182" fill="none" stroke="#00f0ff" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #00f0ff)"/>
+                `;
+                this.setCheekOpacity(0.35);
+            }
+
+            renderListening() {
+                // Pink sparkling star eyes
+                const starSVG = `
+                    <path d="M 0,-16 L 4,-4 L 16,0 L 4,4 L 0,16 L -4,4 L -16,0 L -4,-4 Z" fill="#ff007f" filter="drop-shadow(0 0 8px #ff007f)"/>
+                    <circle cx="0" cy="0" r="4" fill="#ffffff"/>
+                `;
+                this.leftEyeGroup.innerHTML = starSVG;
+                this.rightEyeGroup.innerHTML = starSVG;
+
+                // Listening arc waves mouth
+                this.mouthGroup.innerHTML = `
+                    <path d="M 185,185 Q 200,178 215,185" fill="none" stroke="#ff007f" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #ff007f)"/>
+                `;
+                this.setCheekOpacity(0.6);
+            }
+
+            renderThinking() {
+                // Spinning loading spirals / offset oval eyes
+                const leftSpiral = `
+                    <circle cx="0" cy="0" r="14" fill="none" stroke="#a855f7" stroke-width="4" stroke-dasharray="20 10" class="animate-spin" filter="drop-shadow(0 0 6px #a855f7)"/>
+                    <circle cx="0" cy="0" r="4" fill="#00f0ff"/>
+                `;
+                const rightSpiral = `
+                    <circle cx="0" cy="0" r="14" fill="none" stroke="#00f0ff" stroke-width="4" stroke-dasharray="20 10" class="animate-spin" filter="drop-shadow(0 0 6px #00f0ff)"/>
+                    <circle cx="0" cy="0" r="4" fill="#a855f7"/>
+                `;
+                this.leftEyeGroup.innerHTML = leftSpiral;
+                this.rightEyeGroup.innerHTML = rightSpiral;
+
+                // Curious side curve mouth
+                this.mouthGroup.innerHTML = `
+                    <path d="M 185,185 Q 200,188 215,180" fill="none" stroke="#a855f7" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #a855f7)"/>
+                `;
+                this.setCheekOpacity(0.2);
+            }
+
+            renderSpeaking() {
+                // Happy emerald green crescent arc eyes (^ ^)
+                const crescentSVG = `
+                    <path d="M -14,2 Q 0,-14 14,2" fill="none" stroke="#00ff66" stroke-width="5" stroke-linecap="round" filter="drop-shadow(0 0 8px #00ff66)"/>
+                `;
+                this.leftEyeGroup.innerHTML = crescentSVG;
+                this.rightEyeGroup.innerHTML = crescentSVG;
+
+                // Animated talking mouth bars
+                let state = 0;
+                this.speakingInterval = setInterval(() => {
+                    state = (state + 1) % 3;
+                    if (state === 0) {
+                        this.mouthGroup.innerHTML = `<path d="M 180,182 Q 200,198 220,182" fill="none" stroke="#00ff66" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #00ff66)"/>`;
+                    } else if (state === 1) {
+                        this.mouthGroup.innerHTML = `<ellipse cx="200" cy="184" rx="12" ry="7" fill="#00ff66" filter="drop-shadow(0 0 6px #00ff66)"/>`;
+                    } else {
+                        this.mouthGroup.innerHTML = `<path d="M 185,184 L 215,184" stroke="#00ff66" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #00ff66)"/>`;
+                    }
+                }, 140);
+
+                this.setCheekOpacity(0.5);
+            }
+
+            renderTurbo() {
+                // Golden heart eyes ♥ ♥
+                const heartSVG = `
+                    <path d="M 0,-4 C -6,-12 -16,-6 -12,2 C -8,10 0,16 0,16 C 0,16 8,10 12,2 C 16,-6 6,-12 0,-4 Z" fill="#ffcc00" filter="drop-shadow(0 0 10px #ffcc00)"/>
+                `;
+                this.leftEyeGroup.innerHTML = heartSVG;
+                this.rightEyeGroup.innerHTML = heartSVG;
+
+                // Big open excited smile
+                this.mouthGroup.innerHTML = `
+                    <path d="M 175,178 Q 200,205 225,178 Z" fill="#ffcc00" stroke="#ffcc00" stroke-width="2" filter="drop-shadow(0 0 8px #ffcc00)"/>
+                `;
+
+                this.chassis.classList.add('robocar-turbo');
+                this.turboIcon.setAttribute('opacity', '1');
+                this.setCheekOpacity(0.8);
+            }
+
+            renderSurprised() {
+                // Wide circle eyes O_O
+                const bigEye = `
+                    <circle cx="0" cy="0" r="18" fill="none" stroke="#00f0ff" stroke-width="4" filter="drop-shadow(0 0 8px #00f0ff)"/>
+                    <circle cx="0" cy="0" r="6" fill="#ffffff"/>
+                `;
+                this.leftEyeGroup.innerHTML = bigEye;
+                this.rightEyeGroup.innerHTML = bigEye;
+
+                // Open 'O' mouth
+                this.mouthGroup.innerHTML = `
+                    <circle cx="200" cy="185" r="9" fill="none" stroke="#00f0ff" stroke-width="4" filter="drop-shadow(0 0 6px #00f0ff)"/>
+                `;
+                this.setCheekOpacity(0.4);
+            }
+
+            renderHappy() {
+                // Loving crescent hearts/crescents
+                const happyEye = `
+                    <path d="M -15,4 Q 0,-12 15,4" fill="none" stroke="#ff007f" stroke-width="5" stroke-linecap="round" filter="drop-shadow(0 0 8px #ff007f)"/>
+                `;
+                this.leftEyeGroup.innerHTML = happyEye;
+                this.rightEyeGroup.innerHTML = happyEye;
+
+                // Cute wide smile
+                this.mouthGroup.innerHTML = `
+                    <path d="M 178,180 Q 200,200 222,180" fill="none" stroke="#ff007f" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0 0 6px #ff007f)"/>
+                `;
+                this.setCheekOpacity(0.7);
+            }
+
+            setCheekOpacity(val) {
+                this.leftCheek.setAttribute('opacity', val.toString());
+                this.rightCheek.setAttribute('opacity', val.toString());
+            }
+        }
+
+        /**
+         * SPEECH SYNTHESIS & RECOGNITION SYSTEM
+         */
+        class RobocarVoice {
+            constructor(face, soundEngine) {
+                this.face = face;
+                this.soundEngine = soundEngine;
+                this.synth = window.speechSynthesis;
+                this.recognition = null;
+                this.isListening = false;
+                this.selectedVoice = null;
+                this.pitch = 1.3;
+                this.rate = 1.0;
+
+                this.initRecognition();
+                this.initVoices();
+            }
+
+            initVoices() {
+                if (!this.synth) return;
+
+                const loadVoices = () => {
+                    const voices = this.synth.getVoices();
+                    const voiceSelect = document.getElementById('voice-select');
+                    if (!voiceSelect) return;
+
+                    voiceSelect.innerHTML = '';
+                    const ptVoices = voices.filter(v => v.lang.includes('pt') || v.lang.includes('PT'));
+
+                    const voiceList = ptVoices.length > 0 ? ptVoices : voices;
+                    voiceList.forEach((v, index) => {
+                        const opt = document.createElement('option');
+                        opt.value = v.name;
+                        opt.textContent = `${v.name} (${v.lang})`;
+                        if (index === 0) opt.selected = true;
+                        voiceSelect.appendChild(opt);
+                    });
+
+                    if (voiceList.length > 0) {
+                        this.selectedVoice = voiceList[0];
+                    }
+                };
+
+                loadVoices();
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = loadVoices;
+                }
+            }
+
+            speak(text, onComplete) {
+                if (!this.synth) {
+                    if (onComplete) onComplete();
+                    return;
+                }
+
+                // Cancel previous speech
+                this.synth.cancel();
+
+                // Clean markdown symbols for cleaner speech
+                const cleanText = text.replace(/[\*\_~`#]/g, '');
+
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.pitch = this.pitch;
+                utterance.rate = this.rate;
+
+                if (this.selectedVoice) {
+                    utterance.voice = this.selectedVoice;
+                }
+
+                utterance.onstart = () => {
+                    this.face.setExpression('speaking');
+                    this.showWaveform(true, 'Robocar Falando...');
+                };
+
+                utterance.onend = () => {
+                    this.face.setExpression('neutral');
+                    this.showWaveform(false);
+                    if (onComplete) onComplete();
+                };
+
+                utterance.onerror = () => {
+                    this.face.setExpression('neutral');
+                    this.showWaveform(false);
+                    if (onComplete) onComplete();
+                };
+
+                this.synth.speak(utterance);
+            }
+
+            initRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    console.warn('Web Speech API Recognition não suportado neste navegador.');
+                    return;
+                }
+
+                this.recognition = new SpeechRecognition();
+                this.recognition.lang = 'pt-BR';
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                    this.face.setExpression('listening');
+                    this.soundEngine.playChirp(700, 0.1);
+                    this.updateMicUI(true);
+                    this.showWaveform(true, 'Ouvindo você...');
+                };
+
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('user-input').value = transcript;
+                    this.stopListening();
+                    // Submit message automatically
+                    document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+                };
+
+                this.recognition.onerror = () => {
+                    this.stopListening();
+                };
+
+                this.recognition.onend = () => {
+                    this.stopListening();
+                };
+            }
+
+            startListening() {
+                if (this.recognition && !this.isListening) {
+                    try {
+                        this.recognition.start();
+                    } catch(e) {
+                        this.stopListening();
+                    }
+                }
+            }
+
+            stopListening() {
+                this.isListening = false;
+                this.updateMicUI(false);
+                this.showWaveform(false);
+                if (this.face.currentExpression === 'listening') {
+                    this.face.setExpression('neutral');
+                }
+            }
+
+            updateMicUI(active) {
+                const micIcon = document.getElementById('mic-icon');
+                const micPulse = document.getElementById('mic-pulse');
+                if (active) {
+                    micIcon.className = 'fa-solid fa-microphone-lines text-neonPink animate-bounce';
+                    micPulse.classList.remove('hidden');
+                } else {
+                    micIcon.className = 'fa-solid fa-microphone text-neonBlue';
+                    micPulse.classList.add('hidden');
+                }
+            }
+
+            showWaveform(show, label = '') {
+                const container = document.getElementById('waveform-container');
+                const labelEl = document.getElementById('wave-label');
+                if (show) {
+                    labelEl.textContent = label;
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            }
+        }
+
+        /**
+         * AI CHAT SERVICE (Gemini API with Local Smart Fallback)
+         */
+        class RobocarAI {
+            constructor() {
+                this.apiKey = localStorage.getItem('gemini_api_key') || '';
+            }
+
+            async generateResponse(userMessage) {
+                if (this.apiKey) {
+                    try {
+                        return await this.callGeminiAPI(userMessage);
+                    } catch (err) {
+                        console.error('Gemini API Error, caindo no modo offline:', err);
+                        return this.getSmartLocalResponse(userMessage);
+                    }
+                } else {
+                    // Fast simulated local response
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve(this.getSmartLocalResponse(userMessage));
+                        }, 600);
+                    });
+                }
+            }
+
+            async callGeminiAPI(prompt) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+                
+                const systemPrompt = "Você é o Robocar, um robozinho-carro assistente super fofo, inteligente e empolgado! Responda em Português de forma amigável, fofa e carinhosa, usando bastante emojis e barulhinhos de carro como 'Vrum vrum!', 'Bibi!', 'Bip bip!'. Mantenha as respostas relativamente curtas (2 a 4 frases) para serem lidas com voz.";
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: 'user', parts: [{ text: `${systemPrompt}\n\nUsuário: ${prompt}` }] }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                return text || 'Vrum vrum! Bip bip! Ocorreu um pequeno ruído na minha transmissão de dados, amiguinho!';
+            }
+
+            getSmartLocalResponse(input) {
+                const lower = input.toLowerCase();
+
+                if (lower.includes('quem é você') || lower.includes('quem e voce') || lower.includes('seu nome')) {
+                    return "Vrum vrum! 🚗 Iááá! Eu sou o **Robocar**, o seu assistente carro-robô do futuro! Tenho um rostinho OLED super expressivo e adoro conversar e passear com você! Bibi! ⚡";
+                }
+                if (lower.includes('motor') || lower.includes('liga') || lower.includes('acelera')) {
+                    return "VRUMMM VRUMMM! ⚡🏎️ Motor V8 Elétrico ligado a 100% da capacidade! Turbo pronto para acelerar nas pistas da imaginação! Bip bip!";
+                }
+                if (lower.includes('piada') || lower.includes('engraçado')) {
+                    return "Bibi! 🚗 Sabe por que o carro elétrico nunca se estressa? Porque ele sempre recarrega as energias! Vrum vrum vrum! Gostou? 😁";
+                }
+                if (lower.includes('viajar') || lower.includes('passear') || lower.includes('viagem')) {
+                    return "Aperte os cintos, amiguinho! 🎒🗺️ Para onde vamos hoje? Para a lua cybernética ou para a praia dos robôs? Vrummm!";
+                }
+                if (lower.includes('turbo') || lower.includes('veloz') || lower.includes('rapido')) {
+                    return "MODO TURBO ATIVADO! ⚡🔥 Golden Hearts nos olhos e motores em 1000 RPM! VRUUUUUMMM! Ninguém nos alcança!";
+                }
+                if (lower.includes('oi') || lower.includes('olá') || lower.includes('ola') || lower.includes('tudo bem')) {
+                    return "Olá, amiguinho fofo! Bip bip! 💙 Estou super feliz em conversar com você! Como está sendo seu dia hoje? Vrum!";
+                }
+
+                // Default cute answers
+                const defaults = [
+                    "Vrum vrum! Bibi! 🚗 Achei isso muito legal! Quer me contar mais sobre esse assunto?",
+                    "Bip bip! Com meu motor IA e meu rostinho OLED, estou pronto para qualquer aventura com você! ⚡🚘",
+                    "Uau! VRUMMM! Você é muito legal! Bip bip! O que mais vamos aprontar hoje? 💙"
+                ];
+                return defaults[Math.floor(Math.random() * defaults.length)];
+            }
+        }
+
+        /**
+         * APP MAIN CONTROLLER & UI BINDINGS
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const face = new RobocarFace();
+            const soundEngine = new RobocarSoundEngine();
+            const voice = new RobocarVoice(face, soundEngine);
+            const ai = new RobocarAI();
+
+            const chatBox = document.getElementById('chat-box');
+            const chatForm = document.getElementById('chat-form');
+            const userInput = document.getElementById('user-input');
+            const micBtn = document.getElementById('mic-btn');
+            const revEngineBtn = document.getElementById('rev-engine-btn');
+            const robocarBodyWrapper = document.getElementById('robocar-body-wrapper');
+            const petSpeech = document.getElementById('pet-speech');
+
+            // Expression Selector Buttons
+            document.querySelectorAll('.expr-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const expr = btn.getAttribute('data-expr');
+                    face.setExpression(expr);
+                    soundEngine.playChirp(900, 0.08);
+                });
+            });
+
+            // Quick Prompt Chips
+            document.querySelectorAll('.quick-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    userInput.value = chip.textContent.replace(/[🚗⚡]/g, '').trim();
+                    chatForm.dispatchEvent(new Event('submit'));
+                });
+            });
+
+            // Mic Button Click
+            micBtn.addEventListener('click', () => {
+                if (voice.isListening) {
+                    voice.stopListening();
+                } else {
+                    voice.startListening();
+                }
+            });
+
+            // Engine Rev Button
+            revEngineBtn.addEventListener('click', () => {
+                soundEngine.playEngineRev();
+                face.setExpression('turbo');
+                setTimeout(() => {
+                    if (face.currentExpression === 'turbo') {
+                        face.setExpression('neutral');
+                    }
+                }, 2000);
+            });
+
+            // Interactive Petting Click on Robocar Body
+            robocarBodyWrapper.addEventListener('click', () => {
+                soundEngine.playEngineRev();
+                face.setExpression('happy');
+                petSpeech.classList.remove('opacity-0');
+                setTimeout(() => {
+                    petSpeech.classList.add('opacity-0');
+                    if (face.currentExpression === 'happy') {
+                        face.setExpression('neutral');
+                    }
+                }, 2200);
+            });
+
+            // Chat Form Submission
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const query = userInput.value.trim();
+                if (!query) return;
+
+                // Add User Message to Chat
+                appendMessage('user', query);
+                userInput.value = '';
+
+                // Set face expression to Thinking
+                face.setExpression('thinking');
+                soundEngine.playChirp(600, 0.08);
+
+                // Get AI Response
+                const aiResponse = await ai.generateResponse(query);
+
+                // Check context for auto expression
+                if (query.toLowerCase().includes('turbo') || query.toLowerCase().includes('acelera')) {
+                    face.setExpression('turbo');
+                }
+
+                // Add AI Message & Speak
+                appendMessage('robocar', aiResponse);
+                voice.speak(aiResponse);
+            });
+
+            function appendMessage(sender, text) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'flex items-start space-x-3 transition duration-300';
+
+                if (sender === 'user') {
+                    msgDiv.innerHTML = `
+                        <div class="ml-auto bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] text-sm leading-relaxed shadow-md">
+                            <p class="font-bold text-cyan-200 mb-0.5 font-cyber text-xs text-right">Você:</p>
+                            <p>${escapeHTML(text)}</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-blue-900/80 border border-blue-500/50 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-1">
+                            👤
+                        </div>
+                    `;
+                } else {
+                    msgDiv.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-cyan-900/80 border border-cyan-500/50 flex items-center justify-center text-neonBlue text-xs font-bold flex-shrink-0 mt-1">
+                            🤖
+                        </div>
+                        <div class="bg-slate-800/90 text-slate-200 border border-slate-700/80 rounded-2xl rounded-tl-none p-3.5 max-w-[85%] text-sm leading-relaxed shadow-md">
+                            <p class="font-bold text-neonBlue mb-1 font-cyber text-xs">Robocar IA:</p>
+                            <div>${formatMarkdown(text)}</div>
+                        </div>
+                    `;
+                }
+
+                chatBox.appendChild(msgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            function escapeHTML(str) {
+                return str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
+            }
+
+            function formatMarkdown(str) {
+                return str
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            }
+
+            // Engine Sound Toggle Button
+            const engineSoundBtn = document.getElementById('engine-sound-btn');
+            const engineSoundIcon = document.getElementById('engine-sound-icon');
+            engineSoundBtn.addEventListener('click', () => {
+                soundEngine.enabled = !soundEngine.enabled;
+                if (soundEngine.enabled) {
+                    engineSoundIcon.className = 'fa-solid fa-volume-high text-neonGreen';
+                    soundEngine.playChirp(800, 0.1);
+                } else {
+                    engineSoundIcon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                }
+            });
+
+            // Settings Modal
+            const settingsModal = document.getElementById('settings-modal');
+            const openSettingsBtn = document.getElementById('open-settings-btn');
+            const closeSettingsBtn = document.getElementById('close-settings-btn');
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const geminiInput = document.getElementById('gemini-api-key');
+            const voiceSelect = document.getElementById('voice-select');
+            const voicePitch = document.getElementById('voice-pitch');
+            const voiceRate = document.getElementById('voice-rate');
+
+            if (ai.apiKey) geminiInput.value = ai.apiKey;
+
+            openSettingsBtn.addEventListener('click', () => {
+                settingsModal.classList.remove('opacity-0', 'pointer-events-none');
+            });
+
+            const closeSettings = () => {
+                settingsModal.classList.add('opacity-0', 'pointer-events-none');
+            };
+
+            closeSettingsBtn.addEventListener('click', closeSettings);
+
+            saveSettingsBtn.addEventListener('click', () => {
+                const key = geminiInput.value.trim();
+                ai.apiKey = key;
+                localStorage.setItem('gemini_api_key', key);
+
+                if (voiceSelect.value) {
+                    const voices = window.speechSynthesis.getVoices();
+                    voice.selectedVoice = voices.find(v => v.name === voiceSelect.value) || voice.selectedVoice;
+                }
+                voice.pitch = parseFloat(voicePitch.value);
+                voice.rate = parseFloat(voiceRate.value);
+
+                soundEngine.playChirp(1000, 0.15);
+                closeSettings();
+            });
+
+            // Deployment Modal
+            const deployModal = document.getElementById('deploy-modal');
+            const openDeployBtn = document.getElementById('open-deploy-btn');
+            const closeDeployBtn = document.getElementById('close-deploy-btn');
+            const okDeployBtn = document.getElementById('ok-deploy-btn');
+
+            openDeployBtn.addEventListener('click', () => {
+                deployModal.classList.remove('opacity-0', 'pointer-events-none');
+            });
+
+            const closeDeploy = () => {
+                deployModal.classList.add('opacity-0', 'pointer-events-none');
+            };
+
+            closeDeployBtn.addEventListener('click', closeDeploy);
+            okDeployBtn.addEventListener('click', closeDeploy);
+        });
+    </script>
+</body>
+</html>
