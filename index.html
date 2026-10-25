@@ -1,1 +1,604 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10162b">
+<title>RoboCar 🤖</title>
+
+<style>
+:root {
+  --bg: #0c1224;
+  --panel: #151f39;
+  --cyan: #72e5ff;
+  --pink: #ff91ca;
+  --text: #f4f7ff;
+  --muted: #a9b8d5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #1c3155, var(--bg) 70%);
+  color: var(--text);
+  font-family: system-ui, Arial, sans-serif;
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.app {
+  width: min(100%, 900px);
+  margin: auto;
+  padding: 20px 14px 30px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.logo {
+  font-size: 35px;
+  background: #243a60;
+  padding: 8px 12px;
+  border-radius: 16px;
+}
+
+h1 { margin: 0; color: var(--cyan); }
+.subtitle { margin: 4px 0; color: var(--muted); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid #2a3b60;
+  border-radius: 22px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.robot-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.status {
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+.robot-head {
+  width: 100%;
+  max-width: 310px;
+  padding: 28px 12px 16px;
+  background: linear-gradient(145deg, #243a60, #111d37);
+  border: 3px solid var(--cyan);
+  border-radius: 40px;
+  box-shadow: 0 0 30px #72e5ff25;
+  transition: .25s;
+}
+
+.robot-head.talking {
+  border-color: var(--pink);
+  transform: translateY(-3px);
+}
+
+.eyes {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+}
+
+.eye {
+  width: 76px;
+  height: 86px;
+  border-radius: 45%;
+  background: var(--cyan);
+  color: #102344;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  box-shadow: 0 0 22px #72e5ff66;
+  animation: blink 5s infinite;
+}
+
+@keyframes blink {
+  0%, 44%, 48%, 100% { transform: scaleY(1); }
+  46% { transform: scaleY(.08); }
+}
+
+.mouth {
+  color: var(--pink);
+  text-align: center;
+  font-size: 55px;
+  min-height: 65px;
+  margin-top: 8px;
+}
+
+.robot-name {
+  color: var(--cyan);
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 4px;
+}
+
+.bubble {
+  text-align: center;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  min-height: 45px;
+}
+
+.expression-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chat-title { font-weight: bold; }
+
+.messages {
+  height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px;
+}
+
+.msg {
+  max-width: 95%;
+  padding: 11px;
+  border-radius: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.msg.bot {
+  align-self: flex-start;
+  background: #1b2948;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: #214f70;
+}
+
+.msg small {
+  display: block;
+  color: #b7c9e6;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.composer {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+input {
+  width: 100%;
+  min-width: 0;
+  background: #0b1326;
+  border: 1px solid #2a3b60;
+  border-radius: 12px;
+  padding: 12px;
+  color: white;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: bold;
+}
+
+.primary {
+  background: var(--cyan);
+  color: #10172b;
+}
+
+.secondary {
+  background: #253758;
+  color: white;
+  border: 1px solid #3b527a;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.controls button { flex: 1; }
+
+.mic { width: 100%; margin-top: 10px; }
+.listening { background: var(--pink); color: #25132a; }
+
+.note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+  .layout { grid-template-columns: 1fr; }
+  .messages { height: 260px; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">🤖</div>
+  <div>
+    <h1>RoboCar</h1>
+    <p class="subtitle">Seu robozinho virtual 💙</p>
+  </div>
+</header>
+
+<main class="layout">
+
+<section class="panel robot-panel">
+  <p class="status" id="status">Prontinho pra conversar!</p>
+
+  <div class="robot-head" id="robotHead">
+    <div class="eyes">
+      <div class="eye" id="eye1">●</div>
+      <div class="eye" id="eye2">●</div>
+    </div>
+    <div class="mouth" id="mouth">ω</div>
+    <div class="robot-name">ROBOCAR</div>
+  </div>
+
+  <p class="bubble" id="bubble">
+    Oii! Eu sou o RoboCar! ✨
+  </p>
+
+  <p class="expression-label" id="expressionLabel">
+    Expressão: feliz
+  </p>
+
+  <div class="controls">
+    <button class="secondary" onclick="setExpression('feliz')">😊 Feliz</button>
+    <button class="secondary" onclick="setExpression('curioso')">👀 Curioso</button>
+    <button class="secondary" onclick="setExpression('triste')">🥺 Triste</button>
+    <button class="secondary" onclick="setExpression('sono')">😴 Sono</button>
+  </div>
+</section>
+
+<section class="panel">
+  <p class="chat-title">💬 Nossa conversa</p>
+
+  <div class="messages" id="messages" aria-live="polite">
+    <div class="msg bot">
+      <small>RoboCar</small>
+      Oii! Sou seu RoboCar! Vamos conversar? 🤖
+    </div>
+  </div>
+
+  <form id="chatForm" class="composer">
+    <input
+      id="textInput"
+      type="text"
+      maxlength="500"
+      placeholder="Escreve uma mensagem..."
+      autocomplete="off"
+      aria-label="Sua mensagem"
+    >
+    <button class="primary" type="submit">Enviar</button>
+  </form>
+
+  <button class="primary mic" id="micButton" onclick="toggleListening()">
+    🎙️ Falar comigo
+  </button>
+
+  <div class="controls">
+    <button class="secondary" onclick="toggleVoice()">
+      🔊 <span id="voiceLabel">Voz ligada</span>
+    </button>
+    <button class="secondary" onclick="stopSpeaking()">🔇 Parar voz</button>
+    <button class="secondary" onclick="clearChat()">🧹 Limpar</button>
+  </div>
+
+  <p class="note">
+    Esta versão usa respostas programadas. O reconhecimento de voz
+    depende do navegador e da permissão do microfone. Uma IA real
+    será adicionada numa próxima etapa, com conexão segura.
+  </p>
+</section>
+
+</main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const messages = $("messages");
+const input = $("textInput");
+const statusEl = $("status");
+const bubble = $("bubble");
+const mouth = $("mouth");
+const head = $("robotHead");
+const micButton = $("micButton");
+
+let voiceEnabled = true;
+let recognition = null;
+let listening = false;
+
+function setExpression(expression) {
+  const faces = {
+    feliz:    { mouth: "ω", eyes: "●", label: "feliz" },
+    curioso:  { mouth: "o", eyes: "●", label: "curioso" },
+    triste:   { mouth: "﹏", eyes: "•", label: "tristinho" },
+    sono:     { mouth: "﹏", eyes: "－", label: "com sono" },
+    falando:  { mouth: "ᴗ", eyes: "●", label: "falando" }
+  };
+
+  const face = faces[expression] || faces.feliz;
+
+  mouth.textContent = face.mouth;
+  $("eye1").textContent = face.eyes;
+  $("eye2").textContent = face.eyes;
+  $("expressionLabel").textContent =
+    "Expressão: " + face.label;
+}
+
+function addMessage(who, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + (who === "Você" ? "user" : "bot");
+
+  const label = document.createElement("small");
+  label.textContent = who;
+
+  const body = document.createElement("div");
+  body.textContent = text;
+
+  div.append(label, body);
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function chooseReply(text) {
+  const t = text.toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  if (/\b(oi|ola|eai|opa|bom dia|boa tarde|boa noite)\b/.test(t)) {
+    return {
+      text: "Oiii! Que bom falar contigo! Como tá seu dia?",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("seu nome") || t.includes("quem e voce")) {
+    return {
+      text: "Eu sou o RoboCar, seu robozinho virtual! 🤖",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("tudo bem") || t.includes("como voce esta")) {
+    return {
+      text: "Tô funcionando direitinho! E você, como tá?",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("obrigad") || t.includes("valeu")) {
+    return {
+      text: "Imaginaaa! Tamo junto! 💙",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("triste") || t.includes("chatead")) {
+    return {
+      text: "Poxa... quer me contar o que aconteceu? Tô te ouvindo.",
+      mood: "triste"
+    };
+  }
+
+  if (t.includes("feliz") || t.includes("consegui") || t.includes("deu certo")) {
+    return {
+      text: "Aeeee! Que notícia boa! Me conta mais! ✨",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("piada") || t.includes("engracad")) {
+    return {
+      text: "Por que o computador foi ao médico? Porque tava com vírus! KKKKK 🤖",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("sono") || t.includes("dormir")) {
+    return {
+      text: "Zzz... até robô precisa descansar! 😴",
+      mood: "sono"
+    };
+  }
+
+  if (t.includes("tchau") || t.includes("ate mais")) {
+    return {
+      text: "Tchaaau! Volta quando quiser conversar comigo! 💙",
+      mood: "feliz"
+    };
+  }
+
+  if (t.includes("jesus") || t.includes("deus") || t.includes("cristo")) {
+    return {
+      text: "Esse assunto é importante! Me conta o que você quer compartilhar. 💙",
+      mood: "curioso"
+    };
+  }
+
+  if (t.includes("robo") || t.includes("andar") || t.includes("motor")) {
+    return {
+      text: "Essa é uma das próximas etapas do nosso projeto!",
+      mood: "curioso"
+    };
+  }
+
+  return {
+    text: "Ainda não sei responder isso direitinho! Minha versão atual usa respostas programadas. Com uma IA real, poderei conversar sobre muito mais assuntos. 🤖",
+    mood: "curioso"
+  };
+}
+
+function replyTo(text) {
+  const clean = text.trim();
+  if (!clean) return;
+
+  stopSpeaking();
+  addMessage("Você", clean);
+
+  const result = chooseReply(clean);
+
+  setExpression(result.mood);
+  bubble.textContent = result.text;
+  addMessage("RoboCar", result.text);
+
+  speak(result.text);
+}
+
+function speak(text) {
+  if (!voiceEnabled || !("speechSynthesis" in window)) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "pt-BR";
+  utterance.rate = 1;
+  utterance.pitch = 1.15;
+
+  utterance.onstart = () => {
+    statusEl.textContent = "Tô falando contigo! 🔊";
+    head.classList.add("talking");
+    setExpression("falando");
+  };
+
+  utterance.onend = () => {
+    statusEl.textContent = "Prontinho pra conversar!";
+    head.classList.remove("talking");
+  };
+
+  utterance.onerror = () => {
+    head.classList.remove("talking");
+    statusEl.textContent = "Não consegui reproduzir a voz.";
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+  head.classList.remove("talking");
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  $("voiceLabel").textContent =
+    voiceEnabled ? "Voz ligada" : "Voz desligada";
+
+  if (!voiceEnabled) stopSpeaking();
+}
+
+function clearChat() {
+  messages.replaceChildren();
+  bubble.textContent = "Conversa limpinha! Vamos começar de novo!";
+  setExpression("feliz");
+  addMessage("RoboCar", "Pronto! Sobre o que vamos conversar?");
+}
+
+$("chatForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const text = input.value;
+  input.value = "";
+  replyTo(text);
+});
+
+const SpeechRecognition =
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    listening = true;
+    micButton.classList.add("listening");
+    micButton.textContent = "🎙️ Tô ouvindo... toque para cancelar";
+    statusEl.textContent = "Pode falar, tô ouvindo!";
+  };
+
+  recognition.onresult = event => {
+    const spoken = event.results[0][0].transcript;
+    input.value = spoken;
+    replyTo(spoken);
+  };
+
+  recognition.onerror = event => {
+    statusEl.textContent =
+      event.error === "not-allowed"
+      ? "Permita o microfone nas configurações do navegador."
+      : "Não consegui ouvir. Tente falar ou digitar.";
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micButton.classList.remove("listening");
+    micButton.textContent = "🎙️ Falar comigo";
+
+    if (!head.classList.contains("talking")) {
+      statusEl.textContent = "Prontinho pra conversar!";
+    }
+  };
+}
+
+function toggleListening() {
+  if (!recognition) {
+    statusEl.textContent =
+      "Este navegador não oferece reconhecimento de voz. Tente o Chrome ou digite sua mensagem.";
+    return;
+  }
+
+  if (listening) {
+    recognition.stop();
+    return;
+  }
+
+  try {
+    recognition.start();
+  } catch (error) {
+    statusEl.textContent = "Espera um instante e tenta de novo.";
+  }
+}
+</script>
+</body>
+  </html>
+  
