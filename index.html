@@ -1,1 +1,457 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoboCar 🤖</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0b1220;
+  color: #f0f5ff;
+  padding: 16px;
+}
+
+main {
+  max-width: 650px;
+  margin: auto;
+}
+
+header {
+  text-align: center;
+  padding: 18px;
+}
+
+h1 {
+  color: #67d5ff;
+}
+
+.robot {
+  text-align: center;
+  background: #142238;
+  border: 1px solid #30435e;
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 15px;
+}
+
+.face {
+  font-size: 65px;
+}
+
+#status {
+  color: #a9bad0;
+  font-size: 14px;
+}
+
+.chat {
+  background: #142238;
+  border: 1px solid #30435e;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+#messages {
+  height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 5px;
+}
+
+.message {
+  padding: 12px;
+  border-radius: 14px;
+  max-width: 90%;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.bot {
+  background: #24364f;
+  align-self: flex-start;
+}
+
+.user {
+  background: #17618b;
+  align-self: flex-end;
+}
+
+form {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid #405572;
+  background: #0b1220;
+  color: white;
+  font-size: 16px;
+}
+
+button, select {
+  padding: 11px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button {
+  background: #67d5ff;
+  color: #071421;
+  font-weight: bold;
+}
+
+#mic {
+  background: #344761;
+  color: white;
+}
+
+.settings {
+  margin-top: 15px;
+  padding: 16px;
+  background: #142238;
+  border-radius: 16px;
+}
+
+.settings label {
+  display: block;
+  margin: 12px 0 6px;
+}
+
+select {
+  width: 100%;
+  background: #0b1220;
+  color: white;
+  border: 1px solid #405572;
+}
+
+.small {
+  color: #a9bad0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media(max-width: 400px) {
+  form { gap: 5px; }
+  button { padding: 10px 8px; }
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<header>
+  <h1>🤖 RoboCar</h1>
+  <p>Seu robozinho de conversa!</p>
+</header>
+
+<section class="robot">
+  <div class="face" id="face">🤖</div>
+  <h3 id="robotName">Tô pronto!</h3>
+  <p id="status">Manda uma mensagem pra mim.</p>
+</section>
+
+<section class="chat">
+  <div id="messages" aria-live="polite">
+    <div class="message bot">
+      E aí! Sou o RoboCar. Pode conversar comigo! 😄
+    </div>
+  </div>
+
+  <form id="form">
+    <input
+      id="input"
+      placeholder="Escreve aqui..."
+      autocomplete="off"
+      aria-label="Mensagem"
+      required
+    >
+    <button type="submit">Enviar</button>
+    <button type="button" id="mic" aria-label="Falar">🎙️</button>
+  </form>
+</section>
+
+<section class="settings">
+  <h3>⚙️ Configurações</h3>
+
+  <label for="voice">Voz do robô</label>
+  <select id="voice">
+    <option value="">Voz padrão do aparelho</option>
+  </select>
+
+  <label for="rate">Velocidade da voz</label>
+  <select id="rate">
+    <option value="0.85">Devagar</option>
+    <option value="1" selected>Normal</option>
+    <option value="1.1">Um pouco mais rápida</option>
+  </select>
+
+  <label>
+    <input type="checkbox" id="speak" checked>
+    Falar as respostas em voz alta
+  </label>
+
+  <p class="small">
+    Esta versão funciona sem API. As respostas são limitadas
+    e o microfone depende do suporte do navegador.
+  </p>
+</section>
+
+</main>
+
+<script>
+const input = document.getElementById("input");
+const messages = document.getElementById("messages");
+const face = document.getElementById("face");
+const statusText = document.getElementById("status");
+const robotName = document.getElementById("robotName");
+const voiceSelect = document.getElementById("voice");
+const speakToggle = document.getElementById("speak");
+const rateSelect = document.getElementById("rate");
+
+let voices = [];
+let recognition = null;
+let listening = false;
+let lastHeard = "";
+let lastHeardAt = 0;
+
+function normalize(text) {
+  return text.toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = "message " + type;
+  div.textContent = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function respond(text) {
+  const t = normalize(text);
+
+  if (/^(oi|ola|opa|e ai|eae|bom dia|boa tarde|boa noite)$/.test(t))
+    return "E aí! Tudo certo? 😄";
+
+  if (/quem e voce|qual seu nome|seu nome/.test(t))
+    return "Eu sou o RoboCar, teu robozinho! 🤖";
+
+  if (/tudo bem|como voce ta|como voce esta/.test(t))
+    return "Tô funcionando direitinho por aqui! E tu?";
+
+  if (/obrigad|valeu/.test(t))
+    return "Tamo junto! 😎";
+
+  if (/tchau|ate mais|falou/.test(t))
+    return "Falou! Até a próxima. Se cuida!";
+
+  if (/kkkk|hahaha|rsrs/.test(t))
+    return "KKKKKK 😂 conta aí!";
+
+  if (/triste|to mal|estou mal|chatead/.test(t))
+    return "Poxa, sinto muito. Quer me contar o que aconteceu?";
+
+  if (/feliz|consegui|deu certo|passei|ganhei/.test(t))
+    return "Aí sim! Boa demais! 😄";
+
+  if (/programacao|programar|codigo|html|javascript|github/.test(t))
+    return "Aí sim, assunto de tecnologia! 💻 O que tu tá criando?";
+
+  if (/musica|violao|guitarra/.test(t))
+    return "Música é bom demais! Qual som tu tá curtindo?";
+
+  if (/crist|deus|jesus|igreja|biblia/.test(t))
+    return "Esse é um assunto importante! Me conta o que tu quer conversar.";
+
+  if (/nao entendeu|responde direito|ta errado/.test(t))
+    return "Foi mal! Ainda sou limitado sem uma API. Tenta me explicar de outro jeito.";
+
+  if (/^(sim|ss|aham|uhum)$/.test(t))
+    return "Fechou! Me conta mais.";
+
+  if (/^(nao|nop)$/.test(t))
+    return "Tranquilo! Podemos falar de outra coisa.";
+
+  if (t.endsWith("?"))
+    return "Boa pergunta! Ainda não tenho conhecimento suficiente pra responder isso sem uma API.";
+
+  return "Entendi! Me conta mais sobre isso.";
+}
+
+function loadVoices() {
+  if (!("speechSynthesis" in window)) return;
+
+  voices = speechSynthesis.getVoices();
+  const previous = voiceSelect.value;
+
+  voiceSelect.innerHTML =
+    '<option value="">Voz padrão do aparelho</option>';
+
+  voices.filter(v => v.lang.toLowerCase().startsWith("pt"))
+    .forEach(v => {
+      const option = document.createElement("option");
+      option.value = v.name;
+      option.textContent = `${v.name} (${v.lang})`;
+      voiceSelect.appendChild(option);
+    });
+
+  if (voices.some(v => v.name === previous))
+    voiceSelect.value = previous;
+}
+
+function say(text) {
+  if (!speakToggle.checked || !("speechSynthesis" in window))
+    return;
+
+  // Impede que duas falas sejam reproduzidas juntas.
+  speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "pt-BR";
+  utterance.rate = Number(rateSelect.value) || 1;
+
+  const selected = voices.find(v => v.name === voiceSelect.value);
+  if (selected) utterance.voice = selected;
+
+  utterance.onstart = () => {
+    face.textContent = "😄";
+    robotName.textContent = "Tô falando!";
+  };
+
+  utterance.onend = () => {
+    face.textContent = "🤖";
+    robotName.textContent = "Tô pronto!";
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+function send(text) {
+  text = text.trim();
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  const answer = respond(text);
+  addMessage(answer, "bot");
+
+  say(answer);
+
+  if (!speakToggle.checked) {
+    face.textContent = "🤖";
+    robotName.textContent = "Tô pronto!";
+  }
+}
+
+document.getElementById("form").addEventListener("submit", event => {
+  event.preventDefault();
+  send(input.value);
+});
+
+if ("speechSynthesis" in window) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+} else {
+  speakToggle.checked = false;
+  speakToggle.disabled = true;
+}
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const mic = document.getElementById("mic");
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "pt-BR";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    listening = true;
+    mic.textContent = "⏹️";
+    face.textContent = "👂";
+    robotName.textContent = "Tô te ouvindo!";
+    statusText.textContent = "Pode falar agora.";
+  };
+
+  recognition.onresult = event => {
+    const transcript =
+      event.results[event.results.length - 1][0].transcript.trim();
+
+    const now = Date.now();
+
+    // Evita repetir a mesma transcrição capturada duas vezes.
+    if (!transcript ||
+        (transcript.toLowerCase() === lastHeard.toLowerCase() &&
+         now - lastHeardAt < 2500)) return;
+
+    lastHeard = transcript;
+    lastHeardAt = now;
+    send(transcript);
+  };
+
+  recognition.onerror = event => {
+    statusText.textContent =
+      event.error === "not-allowed"
+        ? "Libera o microfone nas permissões do navegador."
+        : "Não consegui ouvir. Tenta novamente ou escreve.";
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    mic.textContent = "🎙️";
+    if (robotName.textContent === "Tô te ouvindo!") {
+      face.textContent = "🤖";
+      robotName.textContent = "Tô pronto!";
+      statusText.textContent = "Pode mandar outra mensagem.";
+    }
+  };
+
+  mic.addEventListener("click", () => {
+    if (listening) {
+      recognition.stop();
+      return;
+    }
+
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+
+    try {
+      recognition.start();
+    } catch {
+      statusText.textContent = "Espera um instante e tenta de novo.";
+    }
+  });
+} else {
+  mic.disabled = true;
+  mic.title = "Reconhecimento de voz indisponível neste navegador.";
+  statusText.textContent =
+    "O microfone não é compatível com este navegador. Pode escrever normalmente.";
+}
+</script>
+</body>
+</html>
